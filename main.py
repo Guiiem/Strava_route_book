@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 from PIL import Image
 from urllib3.exceptions import InsecureRequestWarning
+
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 import config
@@ -25,7 +26,7 @@ def get_access_token():
         'grant_type': "refresh_token",
         'f': 'json'
     }
-    res = requests.post(config.AUTH_ENDPOINT, data=payload, verify=False)
+    res = requests.post("https://www.strava.com/oauth/token", data=payload, verify=False)
     access_token = res.json()['access_token']
     return access_token
 
@@ -53,6 +54,7 @@ def get_activities_within_dates(all_activites, initial_date, end_date):
     filtered_df = all_activites[(all_activites['start_date'] > initial_date) & (all_activites['start_date'] < end_date)]
     return filtered_df.sort_values(by='start_date')
 
+
 def seconds2hh_mm(seconds: float) -> tuple[float, float]:
     mm, ss = divmod(seconds, 60)
     hh, mm = divmod(mm, 60)
@@ -74,7 +76,6 @@ class Activity:
 
     def save_map_as_png(self, filename: str | Path):
         centroid = [np.mean(self.longitude_array), np.mean(self.latitude_array)]
-
         long_min = np.min(self.longitude_array)
         long_max = np.max(self.longitude_array)
         lat_min = np.min(self.latitude_array)
@@ -85,7 +86,6 @@ class Activity:
 
         m = folium.Map(location=centroid, width=figsize, height=figsize * aspect_ratio, zoom_control=False)
         folium.PolyLine(act.coordinates, color='red').add_to(m)
-
         m.fit_bounds([[long_min, lat_min], [long_max, lat_max]])
         img_data = m._to_png(3)
         img = Image.open(io.BytesIO(img_data))
@@ -122,7 +122,7 @@ class Activity:
         if 'temp' in self.profiles.keys():
             temperature = np.array(self.profiles['temp']['data'])
         else:
-            temperature = np.array([0]*len(distance))
+            temperature = np.array([0] * len(distance))
 
         palette = sns.color_palette("Set2")
 
@@ -217,8 +217,9 @@ class LaTex:
                          f'Desnivell acumulat [m] & {act.activity_details["total_elevation_gain"]:.0f} \\\\ \n',
                          'Temps en moviment [h] & {}:{:02d} \\\\ \n'.format(
                              *seconds2hh_mm(act.activity_details['moving_time'])),
-                         'Temps total [h] & {}:{:02d} \\\\ \n'.format(*seconds2hh_mm(act.activity_details['elapsed_time'])),
-                         f'Velocitat mitjana [km/h] & {act.activity_details["average_speed"]*3.6:.1f} \\\\ \n',
+                         'Temps total [h] & {}:{:02d} \\\\ \n'.format(
+                             *seconds2hh_mm(act.activity_details['elapsed_time'])),
+                         f'Velocitat mitjana [km/h] & {act.activity_details["average_speed"] * 3.6:.1f} \\\\ \n',
                          f'Temperatura mitjana [degC] & {average_temperature} \\\\ \n',
                          '\\end{tabular} \n',
                          '\\end{center} \n']
@@ -262,9 +263,9 @@ class LaTex:
 
 
 if __name__ == '__main__':
-    initial_date = '2022-08-11'
-    end_date = '2022-09-30'
-    book_folder = 'testing'
+    initial_date = '2022-09-10'
+    end_date = '2022-09-12'
+    book_folder = 'cph_to_bcn'
 
     token = get_access_token()
     data = get_activities_dataframe(token)
@@ -294,7 +295,7 @@ if __name__ == '__main__':
     tex = LaTex(folder=book_folder)
     tex.start_document()
     for i, act in enumerate(activities):
-        print(f'Writing activity {i + 1} out of {len(activities)}')
+        print(f'Writing activity {i + 1} out of {len(activities)}...')
         tex.add_activity_section(act)
     tex.end_document()
     tex.compile_document()
