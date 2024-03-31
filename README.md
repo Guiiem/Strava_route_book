@@ -13,9 +13,9 @@ It uses:
 3. Matplotlib to plot velocity and elevation. 
 4. LaTex to compile a pdf document. 
 
-A `config.py` file that contains the API credentials is necessary. 
+A `.env` file that contains the API credentials is necessary. 
 
-```python
+```
 CLIENT_ID = "xxxxxx"
 CLIENT_SECRET = "xxxxxxxxx"
 REFRESH_TOKEN = "xxxxxxxxx"
