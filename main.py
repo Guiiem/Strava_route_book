@@ -9,6 +9,7 @@ import subprocess
 import pickle
 import io
 import os
+import sys
 from pathlib import Path
 from PIL import Image
 from urllib3.exceptions import InsecureRequestWarning
@@ -178,6 +179,14 @@ class LaTex:
         os.makedirs(self.folder, exist_ok=True)
         os.makedirs(self.figures_folder, exist_ok=True)
 
+    def __enter__(self):
+        self.start_document()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.end_document()
+        self.compile_document()
+
     def start_document(self):
         preamble = ['\\documentclass[]{article} \n',
                     '\\usepackage[margin=20mm]{geometry} \n',
@@ -262,11 +271,7 @@ class LaTex:
         subprocess.run(command, shell=True)
 
 
-if __name__ == '__main__':
-    initial_date = '2022-09-10'
-    end_date = '2022-09-12'
-    book_folder = 'cph_to_bcn'
-
+def main(initial_date: str, end_date: str, book_folder: str) -> int:
     token = get_access_token()
     data = get_activities_dataframe(token)
     trimmed_data = get_activities_within_dates(data, initial_date, end_date)
@@ -292,10 +297,17 @@ if __name__ == '__main__':
                 pickle.dump(act, file)
 
     # Generate the document
-    tex = LaTex(folder=book_folder)
-    tex.start_document()
-    for i, act in enumerate(activities):
-        print(f'Writing activity {i + 1} out of {len(activities)}...')
-        tex.add_activity_section(act)
-    tex.end_document()
-    tex.compile_document()
+    with LaTex(folder=book_folder) as tex:
+        for i, act in enumerate(activities):
+            print(f'Writing activity {i + 1} out of {len(activities)}...')
+            tex.add_activity_section(act)
+
+    return 0
+
+
+if __name__ == '__main__':
+    initial_date = '2022-09-10'
+    end_date = '2022-09-12'
+    book_folder = 'testing'
+
+    sys.exit(main(initial_date, end_date, book_folder))
