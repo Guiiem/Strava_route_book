@@ -86,7 +86,7 @@ class Activity:
         aspect_ratio = 0.4
 
         m = folium.Map(location=centroid, width=figsize, height=figsize * aspect_ratio, zoom_control=False)
-        folium.PolyLine(act.coordinates, color='red').add_to(m)
+        folium.PolyLine(self.coordinates, color='red').add_to(m)
         m.fit_bounds([[long_min, lat_min], [long_max, lat_max]])
         img_data = m._to_png(3)
         img = Image.open(io.BytesIO(img_data))
@@ -160,7 +160,7 @@ class Activity:
                 captions.append(photo['caption'])
                 continue
 
-            url = photo['urls']['5000']
+            url = photo['urls'][list(photo['urls'])[0]]
             res = requests.get(url)
             with open(filename, 'wb') as f:
                 f.write(res.content)
@@ -252,7 +252,7 @@ class LaTex:
             filename = photos_path[i].name
             pictures = ['\\begin{minipage}{0.5\\textwidth} \n',
                         '\\includegraphics[width=\\textwidth]{figures/' + filename + '} \n',
-                        '\\caption{' + captions[i] + '} \n',
+                        '\\caption{' + str(captions[i]) + '} \n',
                         '\\end{minipage} \n']
             sec_text.extend(pictures)
 
